@@ -68,7 +68,7 @@ public:
     int spotsCounter = 2;
     std::vector<ParkingSpot*> spots;
     Parking() {
-        y = 60;
+        y = 110;
         for(int i = 0; i < 10; i++) {
             spots.push_back(new ParkingSpot(100, y+=60));
         }
@@ -79,11 +79,12 @@ class Car: public Entity {
 public:
     int n;
     bool parked = 0;
-    Parking * parking = new Parking();
-    Car() {
+    Parking * parking;
+    Car(Parking * parking) {
         speed=5;
         angle=0;
         n=0;
+        this->parking = parking;
     }
 
     ParkingSpot* findFreeSpot() {
@@ -94,36 +95,42 @@ public:
                 return parkingSpot;
             }
         }
-        return new ParkingSpot(500, 200);
+        return new ParkingSpot(500, -200);
     }
 
     void park() {
         ParkingSpot * parkingSpot = findFreeSpot();
         float tx=parkingSpot->x;
         float ty=parkingSpot->y;
+
         float beta = angle-atan2(tx-x,-ty+y);
         if(y < ty+200) {
             if (sin(beta)<0) angle+=0.005*speed;
             else angle-=0.005*speed;
-            if ((x-tx)*(x-tx)+(y-ty)*(y-ty)<25*25) {
+            if ((x-tx)*(x-tx)+(y-ty)*(y-ty)<40*30) {
                 n=(n+1)%parking->spotsCounter;
                 parked = 1;
                 parkingSpot->free = 0;
             }
-
         }
+    }
 
+    void unPark(){
+        speed = -4;
     }
 
     void move() {
 
         x += sin(angle) * speed;
-        y-= cos(angle) * speed;
+        y -= cos(angle) * speed;
     }
 
     void update() {
             if(!parked){
                 park();
+                move();
+            } else {
+                unPark();
                 move();
             }
 
@@ -135,6 +142,21 @@ public:
 };
 
 int Entity::id_generator = 0;
+
+bool isColide(Entity* car, ParkingSpot* parkingSpot){
+    float carx = car->x;
+    float cary = car->y;
+    float px = parkingSpot->x - 20;
+    float py = parkingSpot->y;
+    //cout << "parkingSpot x: " << px << " y: " << py << endl;
+    //cout << "car x: " << carx << " y: " << cary << endl;
+    if(((carx>px)&&(carx<(px+100)))&&((cary>py)&&(cary<(py+60)))){
+        //cout << "true" << endl;
+        return true;
+    }
+    //cout << "false" << endl;
+    return false;
+}
 
 int main() {
     Texture t1, t2, t3;
@@ -150,10 +172,10 @@ int main() {
     window.setFramerateLimit(60);
     std::list<Entity*> entities;
 
-    Entity *parking = new Parking();
+    Parking *parking = new Parking();
     entities.push_back(parking);
 
-    Entity *car = new Car();
+    Car *car = new Car(parking);
     entities.push_back(car);
     parking->settings(parkingSprite, 0, 0);
     car->settings(carSprite, 500, 800);
@@ -165,17 +187,25 @@ int main() {
     float turnSpeed=0.05;
     while(window.isOpen()) {
 
-        window.clear(Color::White);
 
+        Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == Event::Closed)
+                window.close();
 
+            if (event.type == Event::KeyPressed)
+                if (event.key.code == Keyboard::Space)
+                {
+                    Entity *sCar = new Car(parking);
+                    entities.push_back(sCar);
+                    sCar->settings(carSprite, 500, 800);
+                }
+        }
         if(Keyboard::isKeyPressed(Keyboard::Key::Escape)) {
             break;
         }
-        if(Keyboard::isKeyPressed(Keyboard::Key::L)) {
-            Entity *sCar = new Car();
-            entities.push_back(sCar);
-            sCar->settings(carSprite, 500, 800);
-        }
+
         /*
             bool Up=0,Right=0,Down=0,Left=0;
             if (Keyboard::isKeyPressed(Keyboard::Up)) Up=1;
@@ -203,6 +233,15 @@ int main() {
             car->speed = speed;
             car->angle = angle;
         */
+        for(auto a:entities){
+            for(ParkingSpot* ps:parking->spots){
+                if(isColide(a, ps)){
+                  //  ps->free = false;
+
+                }
+            }
+
+        }
 
         for(auto i:entities){
             i->update();
