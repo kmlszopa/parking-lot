@@ -787,11 +787,13 @@
 	<string>
 	<vector>
 
-1515875673 source:c:\users\ksz\documents\szkola\parking-lot\src\main.cpp
+1517084114 source:c:\users\ksz\documents\szkola\parking-lot\src\main.cpp
 	<SFML/Graphics.hpp>
 	<math.h>
 	<list>
 	<iostream>
+	<string>
+	<sstream>
 
 1515862801 c:\users\ksz\documents\szkola\parking-lot\sfml-2.4.2\include\sfml\graphics.hpp
 	<SFML/Window.hpp>
